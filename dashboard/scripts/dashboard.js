@@ -1,647 +1,268 @@
-// Main Dashboard Controller - Coordinates all dashboard modules
+// AI Bazaar - Dashboard Data & Language JS
+const API_BASE = "https://ai-bazaar-backend-g2yb.onrender.com";
 
-class Dashboard {
-    constructor() {
-        this.currentSection = 'dashboard';
-        this.shopData = null;
-        this.userData = null;
-        this.modules = {};
-        
-        this.init();
+// ── Language System ───────────────────────────────────────────────
+const TRANSLATIONS = {
+    en: {
+        todaySales: "Today's Sales",
+        monthlyRevenue: "Monthly Revenue",
+        lowStock: "Low Stock Items",
+        totalProducts: "Total Products",
+        recentActivity: "Recent Activity",
+        topSelling: "Top Selling Items",
+        aiInsight: "AI Insight",
+        noActivity: "No recent activity. Start recording sales!",
+        noItems: "No items found. Add products to inventory!",
+        saleRecorded: "Sale recorded",
+        lowStockAlert: "Low stock alert",
+        remaining: "remaining"
+    },
+    hi: {
+        todaySales: "आज की बिक्री",
+        monthlyRevenue: "मासिक राजस्व",
+        lowStock: "कम स्टॉक",
+        totalProducts: "कुल उत्पाद",
+        recentActivity: "हाल की गतिविधि",
+        topSelling: "सबसे ज्यादा बिकने वाले",
+        aiInsight: "AI सुझाव",
+        noActivity: "कोई गतिविधि नहीं। बिक्री दर्ज करें!",
+        noItems: "कोई आइटम नहीं। इन्वेंटरी में उत्पाद जोड़ें!",
+        saleRecorded: "बिक्री दर्ज",
+        lowStockAlert: "कम स्टॉक अलर्ट",
+        remaining: "बचा है"
+    },
+    ta: {
+        todaySales: "இன்றைய விற்பனை",
+        monthlyRevenue: "மாத வருவாய்",
+        lowStock: "குறைந்த இருப்பு",
+        totalProducts: "மொத்த பொருட்கள்",
+        recentActivity: "சமீபத்திய செயல்பாடு",
+        topSelling: "அதிகம் விற்பனையானவை",
+        aiInsight: "AI யோசனை",
+        noActivity: "செயல்பாடு இல்லை!",
+        noItems: "பொருட்கள் இல்லை!",
+        saleRecorded: "விற்பனை பதிவு",
+        lowStockAlert: "குறைந்த இருப்பு எச்சரிக்கை",
+        remaining: "மீதமுள்ளது"
+    },
+    gu: {
+        todaySales: "આજની વેચાણ",
+        monthlyRevenue: "માસિક આવક",
+        lowStock: "ઓછો સ્ટોક",
+        totalProducts: "કુલ ઉત્પાદનો",
+        recentActivity: "તાજેતરની પ્રવૃત્તિ",
+        topSelling: "સૌથી વધુ વેચાતી",
+        aiInsight: "AI સૂઝ",
+        noActivity: "કોઈ પ્રવૃત્તિ નથી!",
+        noItems: "કોઈ આઇટમ નથી!",
+        saleRecorded: "વેચાણ નોંધ્યું",
+        lowStockAlert: "ઓછો સ્ટોક ચેતવણી",
+        remaining: "બાકી"
+    },
+    te: {
+        todaySales: "నేటి అమ్మకాలు",
+        monthlyRevenue: "నెలవారీ ఆదాయం",
+        lowStock: "తక్కువ స్టాక్",
+        totalProducts: "మొత్తం ఉత్పత్తులు",
+        recentActivity: "ఇటీవలి కార్యాచరణ",
+        topSelling: "అత్యధికంగా అమ్ముడైనవి",
+        aiInsight: "AI అంతర్దృష్టి",
+        noActivity: "కార్యాచరణ లేదు!",
+        noItems: "అంశాలు లేవు!",
+        saleRecorded: "అమ్మకం నమోదు",
+        lowStockAlert: "తక్కువ స్టాక్ హెచ్చరిక",
+        remaining: "మిగిలి ఉంది"
     }
+};
 
-    async init() {
-        console.log('🚀 Initializing Dashboard...');
-        
-        this.checkAuth();
-        this.setupEventListeners();
-        this.loadUserData();
-        this.loadDashboardData();
-        this.initializeModules();
-        this.setupToastSystem();
-        
-        // Set current date
-        this.updateCurrentDate();
-    }
+let currentLang = localStorage.getItem('language') || 'en';
 
-    checkAuth() {
-        const token = localStorage.getItem('access_token');
-        if (!token) {
-            window.location.href = '/login.html';
-            return;
-        }
-        
-        // Update UI with user info
-        const userName = localStorage.getItem('user_name') || 'Ramesh Kumar';
-        const userNameEl = document.querySelector('.user-name');
-        if (userNameEl) userNameEl.textContent = userName;
-    }
+function t(key) {
+    return TRANSLATIONS[currentLang]?.[key] || TRANSLATIONS['en'][key] || key;
+}
 
-    setupEventListeners() {
-        // Sidebar toggle
-        const sidebarToggle = document.getElementById('sidebarToggle');
-        const sidebar = document.getElementById('sidebar');
-        
-        if (sidebarToggle && sidebar) {
-            sidebarToggle.addEventListener('click', () => {
-                sidebar.classList.toggle('active');
-            });
-        }
-        
-        // Navigation
-        document.querySelectorAll('.nav-item').forEach(item => {
-            item.addEventListener('click', (e) => {
-                e.preventDefault();
-                const section = item.getAttribute('data-section');
-                this.switchSection(section);
-            });
+function applyLanguage() {
+    const cardTitles = document.querySelectorAll('.summary-card h3');
+    if (cardTitles[0]) cardTitles[0].textContent = t('todaySales');
+    if (cardTitles[1]) cardTitles[1].textContent = t('monthlyRevenue');
+    if (cardTitles[2]) cardTitles[2].textContent = t('lowStock');
+    if (cardTitles[3]) cardTitles[3].textContent = t('totalProducts');
+
+    const activityHeader = document.querySelector('.recent-activity .chart-header h3');
+    if (activityHeader) activityHeader.textContent = t('recentActivity');
+
+    const topHeader = document.querySelector('.top-items-container .chart-header h3');
+    if (topHeader) topHeader.textContent = t('topSelling');
+
+    const insightHeader = document.querySelector('.ai-insight-card h3');
+    if (insightHeader) insightHeader.textContent = t('aiInsight');
+}
+
+// ── Language Selector ─────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', function () {
+    const langSelect = document.getElementById('languageSelect');
+    if (langSelect) {
+        const reverseMap = { en: 'english', hi: 'hindi', ta: 'tamil', gu: 'gujarati', te: 'telugu' };
+        langSelect.value = reverseMap[currentLang] || 'english';
+
+        langSelect.addEventListener('change', function () {
+            const langMap = { english: 'en', hindi: 'hi', tamil: 'ta', gujarati: 'gu', telugu: 'te' };
+            currentLang = langMap[this.value] || 'en';
+            localStorage.setItem('language', currentLang);
+            applyLanguage();
+            loadDashboardData();
         });
-        
-        // Profile dropdown
-        const profileBtn = document.getElementById('profileBtn');
-        const profileDropdown = document.getElementById('profileDropdown');
-        
-        if (profileBtn && profileDropdown) {
-            profileBtn.addEventListener('click', (e) => {
-                e.stopPropagation();
-                profileDropdown.classList.toggle('active');
-            });
-            
-            document.addEventListener('click', () => {
-                profileDropdown.classList.remove('active');
-            });
+    }
+
+    loadDashboardData();
+    applyLanguage();
+});
+
+// ── Fetch helper ──────────────────────────────────────────────────
+async function apiFetch(path) {
+    const token = localStorage.getItem('access_token');
+    const res = await fetch(`${API_BASE}${path}`, {
+        headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
         }
-        
-        // Notification dropdown
-        const notificationBtn = document.getElementById('notificationBtn');
-        const notificationDropdown = document.getElementById('notificationDropdown');
-        
-        if (notificationBtn && notificationDropdown) {
-            notificationBtn.addEventListener('click', (e) => {
-                e.stopPropagation();
-                notificationDropdown.classList.toggle('active');
-            });
-            
-            // Mark all as read
-            const markAllBtn = document.querySelector('.mark-all-read');
-            if (markAllBtn) {
-                markAllBtn.addEventListener('click', () => {
-                    document.querySelectorAll('.notification-item.unread').forEach(item => {
-                        item.classList.remove('unread');
-                    });
-                    document.querySelector('.notification-count').textContent = '0';
-                });
-            }
-        }
-        
-        // Logout
-        const logoutBtn = document.getElementById('logoutBtn');
-        if (logoutBtn) {
-            logoutBtn.addEventListener('click', () => {
-                this.logout();
-            });
-        }
-        
-        // Help button
-        const helpBtn = document.getElementById('helpBtn');
-        if (helpBtn) {
-            helpBtn.addEventListener('click', () => {
-                this.showHelp();
-            });
-        }
-        
-        // Profile menu tabs
-        document.querySelectorAll('.profile-menu-item').forEach(item => {
-            item.addEventListener('click', () => {
-                const tabId = item.getAttribute('data-tab');
-                this.switchProfileTab(tabId);
-                
-                document.querySelectorAll('.profile-menu-item').forEach(i => i.classList.remove('active'));
-                item.classList.add('active');
-            });
-        });
-        
-        // Edit profile buttons
-        const editShopBtn = document.getElementById('editShopBtn');
-        if (editShopBtn) {
-            editShopBtn.addEventListener('click', () => this.toggleEditMode('shop'));
-        }
-        
-        const editPersonalBtn = document.getElementById('editPersonalBtn');
-        if (editPersonalBtn) {
-            editPersonalBtn.addEventListener('click', () => this.toggleEditMode('personal'));
-        }
-    }
+    });
+    if (!res.ok) throw new Error(`API error: ${res.status}`);
+    return res.json();
+}
 
-    initializeModules() {
-        // Initialize charts if on dashboard
-        if (document.getElementById('dashboard').classList.contains('active')) {
-            if (window.dashboardCharts) {
-                window.dashboardCharts.initAllCharts();
-            }
-        }
-        
-        // Other modules are initialized by their own files
-        console.log('✅ Dashboard modules ready');
-    }
+// ── Load Dashboard Data ───────────────────────────────────────────
+async function loadDashboardData() {
+    try {
+        const [sales, inventory] = await Promise.all([
+            apiFetch('/api/sales/?limit=100').catch(() => []),
+            apiFetch('/api/inventory/').catch(() => [])
+        ]);
 
-    switchSection(sectionId) {
-        this.currentSection = sectionId;
-        
-        // Update navigation
-        document.querySelectorAll('.nav-item').forEach(item => {
-            item.classList.remove('active');
-            if (item.getAttribute('data-section') === sectionId) {
-                item.classList.add('active');
-            }
-        });
-        
-        // Update sections
-        document.querySelectorAll('.dashboard-section').forEach(section => {
-            section.classList.remove('active');
-        });
-        
-        const targetSection = document.getElementById(sectionId);
-        if (targetSection) {
-            targetSection.classList.add('active');
-            
-            // Initialize section-specific features
-            this.initSectionFeatures(sectionId);
-        }
-        
-        // Close mobile sidebar
-        const sidebar = document.getElementById('sidebar');
-        if (sidebar && window.innerWidth <= 1024) {
-            sidebar.classList.remove('active');
-        }
-    }
+        updateKPICards(sales, inventory);
+        updateRecentActivity(sales);
+        updateTopSellingItems(inventory);
+        updateAIInsight(sales, inventory);
 
-    initSectionFeatures(sectionId) {
-        switch(sectionId) {
-            case 'dashboard':
-                if (window.dashboardCharts) {
-                    setTimeout(() => window.dashboardCharts.initAllCharts(), 100);
-                }
-                break;
-            case 'voice-entry':
-                if (!window.voiceEntry) {
-                    window.voiceEntry = new VoiceEntryManager();
-                }
-                break;
-            case 'inventory':
-                if (!window.inventoryManager) {
-                    window.inventoryManager = new InventoryManager();
-                }
-                break;
-            case 'billing':
-                if (!window.billingManager) {
-                    window.billingManager = new BillingManager();
-                }
-                break;
-            case 'register-upload':
-                if (!window.registerUpload) {
-                    window.registerUpload = new RegisterUploadManager();
-                }
-                break;
-        }
-    }
-
-    switchProfileTab(tabId) {
-        document.querySelectorAll('.profile-tab').forEach(tab => {
-            tab.classList.remove('active');
-        });
-        
-        const targetTab = document.getElementById(`${tabId}-tab`);
-        if (targetTab) {
-            targetTab.classList.add('active');
-        }
-    }
-
-    toggleEditMode(section) {
-        const form = section === 'shop' ? 
-            document.getElementById('shopInfoForm') : 
-            document.getElementById('personalInfoForm');
-        
-        const inputs = form.querySelectorAll('input, textarea, select');
-        const isReadOnly = inputs[0].readOnly;
-        
-        inputs.forEach(input => {
-            if (input.tagName === 'INPUT' || input.tagName === 'TEXTAREA') {
-                input.readOnly = !isReadOnly;
-            } else if (input.tagName === 'SELECT') {
-                input.disabled = !isReadOnly;
-            }
-        });
-        
-        const btn = document.getElementById(section === 'shop' ? 'editShopBtn' : 'editPersonalBtn');
-        if (btn) {
-            btn.innerHTML = isReadOnly ? 
-                '<i class="fas fa-save"></i> Save Changes' : 
-                '<i class="fas fa-edit"></i> Edit Information';
-        }
-        
-        if (!isReadOnly) {
-            // Save changes
-            this.saveProfileChanges(section);
-        }
-    }
-
-    saveProfileChanges(section) {
-        this.showToast('Changes saved successfully!', 'success');
-        
-        setTimeout(() => {
-            this.toggleEditMode(section);
-        }, 1000);
-    }
-
-    async loadUserData() {
-        // Load user data from localStorage or API
-        this.userData = {
-            name: 'Ramesh Kumar',
-            email: 'ramesh.kumar@email.com',
-            phone: '9876543210',
-            shopName: 'Ramesh Kirana Store',
-            shopAddress: 'Gandhi Nagar, Delhi - 110031',
-            gst: '07AAACR5055F1Z5'
-        };
-        
-        // Update UI with user data
-        this.updateUserUI();
-    }
-
-    updateUserUI() {
-        // Update shop name in topbar
-        const shopNameEl = document.querySelector('.shop-name');
-        if (shopNameEl) shopNameEl.textContent = this.userData.shopName;
-        
-        // Update location
-        const shopLocationEl = document.querySelector('.shop-location');
-        if (shopLocationEl) shopLocationEl.textContent = 'Gandhi Nagar, Delhi';
-        
-        // Update profile section
-        this.updateProfileForms();
-    }
-
-    updateProfileForms() {
-        // Shop info form
-        const shopName = document.getElementById('shopName');
-        if (shopName) shopName.value = this.userData.shopName;
-        
-        const shopAddress = document.getElementById('shopAddress');
-        if (shopAddress) shopAddress.value = this.userData.shopAddress;
-        
-        const gstNumber = document.getElementById('gstNumber');
-        if (gstNumber) gstNumber.value = this.userData.gst;
-        
-        // Personal info form
-        const personalName = document.getElementById('personalName');
-        if (personalName) personalName.value = this.userData.name;
-        
-        const personalEmail = document.getElementById('personalEmail');
-        if (personalEmail) personalEmail.value = this.userData.email;
-        
-        const personalPhone = document.getElementById('personalPhone');
-        if (personalPhone) personalPhone.value = this.userData.phone;
-    }
-
-    async loadDashboardData() {
-        this.showSectionLoading('dashboard');
-        
-        try {
-            // Simulate API call
-            await new Promise(resolve => setTimeout(resolve, 1000));
-            
-            // Update summary cards
-            document.getElementById('todaySales').textContent = '5,250';
-            document.getElementById('monthlyRevenue').textContent = '42,850';
-            document.getElementById('lowStockCount').textContent = '7';
-            document.getElementById('pendingTasks').textContent = '3';
-            
-            this.hideSectionLoading('dashboard');
-            
-        } catch (error) {
-            console.error('Failed to load dashboard data:', error);
-            this.hideSectionLoading('dashboard');
-            this.showToast('Failed to load dashboard data', 'error');
-        }
-    }
-
-    updateCurrentDate() {
-        const dateEl = document.getElementById('currentDate');
-        if (dateEl) {
-            const now = new Date();
-            const options = { day: 'numeric', month: 'short', year: 'numeric' };
-            dateEl.textContent = now.toLocaleDateString('en-IN', options);
-        }
-    }
-
-    logout() {
-        localStorage.removeItem('access_token');
-        localStorage.removeItem('user_name');
-        this.showToast('Logging out...', 'info');
-        
-        setTimeout(() => {
-            window.location.href = '/login.html';
-        }, 1000);
-    }
-
-    showHelp() {
-        const helpModal = document.createElement('div');
-        helpModal.className = 'modal';
-        helpModal.innerHTML = `
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h3>Help & Support</h3>
-                    <button class="close-btn" onclick="this.closest('.modal').remove()">&times;</button>
-                </div>
-                <div class="modal-body">
-                    <h4>Quick Tips:</h4>
-                    <ul>
-                        <li>Use Voice Entry to add sales quickly</li>
-                        <li>Check Inventory for low stock alerts</li>
-                        <li>Upload register photos for AI analysis</li>
-                        <li>Generate GST invoices in Billing section</li>
-                    </ul>
-                    <h4>Contact Support:</h4>
-                    <p>📞 Phone: +91 98765 43210</p>
-                    <p>📧 Email: support@aibazaar.com</p>
-                    <p>⏰ Hours: 9 AM - 8 PM (Mon-Sat)</p>
-                </div>
-                <div class="modal-footer">
-                    <button class="btn-primary" onclick="this.closest('.modal').remove()">Got it</button>
-                </div>
-            </div>
-        `;
-        
-        document.body.appendChild(helpModal);
-        setTimeout(() => helpModal.classList.add('active'), 10);
-    }
-
-    setupToastSystem() {
-        // Create toast container if it doesn't exist
-        if (!document.getElementById('toastContainer')) {
-            const container = document.createElement('div');
-            container.id = 'toastContainer';
-            container.className = 'toast-container';
-            document.body.appendChild(container);
-        }
-    }
-
-    showToast(message, type = 'info') {
-        const container = document.getElementById('toastContainer');
-        if (!container) return;
-        
-        const toast = document.createElement('div');
-        toast.className = `toast ${type}`;
-        
-        const icons = {
-            success: 'fa-check-circle',
-            error: 'fa-exclamation-circle',
-            warning: 'fa-exclamation-triangle',
-            info: 'fa-info-circle'
-        };
-        
-        toast.innerHTML = `
-            <i class="fas ${icons[type] || icons.info}"></i>
-            <span>${message}</span>
-        `;
-        
-        container.appendChild(toast);
-        
-        // Remove after 3 seconds
-        setTimeout(() => {
-            toast.style.animation = 'slideOut 0.3s ease';
-            setTimeout(() => toast.remove(), 300);
-        }, 3000);
-    }
-
-    showSectionLoading(sectionId) {
-        const section = document.getElementById(sectionId);
-        if (!section) return;
-        
-        const loader = document.createElement('div');
-        loader.className = 'section-loader';
-        loader.id = `${sectionId}-loader`;
-        loader.innerHTML = '<div class="spinner"></div>';
-        
-        section.style.position = 'relative';
-        section.appendChild(loader);
-    }
-
-    hideSectionLoading(sectionId) {
-        const loader = document.getElementById(`${sectionId}-loader`);
-        if (loader) loader.remove();
+    } catch (err) {
+        console.error('Dashboard load failed:', err);
+        showFallbackData();
     }
 }
 
-// Initialize dashboard when DOM is ready
-document.addEventListener('DOMContentLoaded', () => {
-    window.dashboard = new Dashboard();
-    
-    // Add CSS for toasts and loaders
-    const style = document.createElement('style');
-    style.textContent = `
-        .toast-container {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            z-index: 9999;
-        }
-        
-        .toast {
-            background: white;
-            border-radius: 8px;
-            padding: 12px 20px;
-            margin-bottom: 10px;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            animation: slideIn 0.3s ease;
-            min-width: 300px;
-        }
-        
-        .toast.success { border-left: 4px solid #4CAF50; }
-        .toast.error { border-left: 4px solid #F44336; }
-        .toast.warning { border-left: 4px solid #FFB74D; }
-        .toast.info { border-left: 4px solid #2196F3; }
-        
-        .toast i { font-size: 1.25rem; }
-        .toast.success i { color: #4CAF50; }
-        .toast.error i { color: #F44336; }
-        .toast.warning i { color: #FFB74D; }
-        .toast.info i { color: #2196F3; }
-        
-        @keyframes slideIn {
-            from {
-                transform: translateX(100%);
-                opacity: 0;
-            }
-            to {
-                transform: translateX(0);
-                opacity: 1;
-            }
-        }
-        
-        @keyframes slideOut {
-            to {
-                transform: translateX(100%);
-                opacity: 0;
-            }
-        }
-        
-        .section-loader {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(255,255,255,0.8);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 10;
-            border-radius: 12px;
-        }
-        
-        .section-loader .spinner {
-            width: 40px;
-            height: 40px;
-            border: 3px solid #FFE5DC;
-            border-top: 3px solid #FF6B35;
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-        }
-        
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-        
-        .typing-indicator .bubble {
-            display: flex;
-            gap: 4px;
-        }
-        
-        .typing-indicator .dot {
-            width: 8px;
-            height: 8px;
-            background: #999;
-            border-radius: 50%;
-            animation: bounce 1.4s infinite;
-        }
-        
-        .typing-indicator .dot:nth-child(2) { animation-delay: 0.2s; }
-        .typing-indicator .dot:nth-child(3) { animation-delay: 0.4s; }
-        
-        @keyframes bounce {
-            0%, 60%, 100% { transform: translateY(0); }
-            30% { transform: translateY(-4px); }
-        }
-        
-        .error {
-            border-color: #F44336 !important;
-        }
-        
-        .modal {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0,0,0,0.5);
-            display: none;
-            align-items: center;
-            justify-content: center;
-            z-index: 10000;
-        }
-        
-        .modal.active {
-            display: flex;
-        }
-        
-        .modal-content {
-            background: white;
-            border-radius: 12px;
-            width: 90%;
-            max-width: 600px;
-            max-height: 90vh;
-            overflow-y: auto;
-        }
-        
-        .modal-content.large {
-            max-width: 800px;
-        }
-        
-        .modal-header {
-            padding: 20px 24px;
-            border-bottom: 1px solid #E0E0E0;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        
-        .modal-body {
-            padding: 24px;
-        }
-        
-        .modal-footer {
-            padding: 20px 24px;
-            border-top: 1px solid #E0E0E0;
-            display: flex;
-            justify-content: flex-end;
-            gap: 12px;
-        }
-        
-        .close-btn {
-            background: none;
-            border: none;
-            font-size: 1.5rem;
-            cursor: pointer;
-            color: #666;
-        }
-        
-        .invoice-preview-modal {
-            padding: 20px;
-            background: white;
-        }
-        
-        .invoice-preview-modal table {
-            width: 100%;
-            border-collapse: collapse;
-            margin: 20px 0;
-        }
-        
-        .invoice-preview-modal th,
-        .invoice-preview-modal td {
-            padding: 12px;
-            text-align: left;
-            border-bottom: 1px solid #E0E0E0;
-        }
-        
-        .invoice-preview-modal th {
-            background: #f8f9fa;
-        }
-        
-        .grand {
-            font-size: 1.2rem;
-            font-weight: 600;
-            margin-top: 10px;
-            padding-top: 10px;
-            border-top: 2px solid #E0E0E0;
-        }
-        
-        .no-data {
-            text-align: center;
-            padding: 40px;
-            color: #999;
-        }
-        
-        .no-data i {
-            font-size: 3rem;
-            margin-bottom: 10px;
-        }
-    `;
-    
-    document.head.appendChild(style);
-});
+// ── KPI Cards ─────────────────────────────────────────────────────
+function updateKPICards(sales, inventory) {
+    const today = new Date().toDateString();
+    const todaySales = sales.filter(s => new Date(s.created_at).toDateString() === today);
+    const todayRevenue = todaySales.reduce((sum, s) => sum + s.total, 0);
+    const monthRevenue = sales.reduce((sum, s) => sum + s.total, 0);
+    const lowStock = inventory.filter(p => p.quantity <= p.reorder_level);
+
+    setEl('todaySales', `₹${todayRevenue.toLocaleString('en-IN', { maximumFractionDigits: 0 })}`);
+    setEl('monthlyRevenue', `₹${monthRevenue.toLocaleString('en-IN', { maximumFractionDigits: 0 })}`);
+    setEl('lowStockCount', lowStock.length);
+    setEl('totalItems', inventory.length);
+}
+
+// ── Recent Activity ───────────────────────────────────────────────
+function updateRecentActivity(sales) {
+    const activityList = document.getElementById('activityList');
+    if (!activityList) return;
+
+    if (!sales || sales.length === 0) {
+        activityList.innerHTML = `<p style="padding:20px;color:#999;text-align:center;">${t('noActivity')}</p>`;
+        return;
+    }
+
+    activityList.innerHTML = sales.slice(0, 5).map(sale => {
+        const time = new Date(sale.created_at).toLocaleTimeString('en-IN', {
+            hour: '2-digit', minute: '2-digit'
+        });
+        return `
+            <div class="activity-item">
+                <div class="activity-icon success">
+                    <i class="fas fa-check-circle"></i>
+                </div>
+                <div class="activity-details">
+                    <p><strong>${t('saleRecorded')}</strong> — 
+                    ${sale.items?.length || 0} item(s)
+                    ${sale.customer_name ? ' · ' + sale.customer_name : ''}
+                    · <strong>₹${sale.total.toFixed(2)}</strong></p>
+                    <span class="activity-time">${time}</span>
+                </div>
+            </div>
+        `;
+    }).join('');
+}
+
+// ── Top Selling Items ─────────────────────────────────────────────
+function updateTopSellingItems(inventory) {
+    const topList = document.getElementById('topItemsList');
+    if (!topList) return;
+
+    if (!inventory || inventory.length === 0) {
+        topList.innerHTML = `<p style="padding:20px;color:#999;text-align:center;">${t('noItems')}</p>`;
+        return;
+    }
+
+    const sorted = [...inventory]
+        .sort((a, b) => (b.selling_price * b.quantity) - (a.selling_price * a.quantity))
+        .slice(0, 5);
+
+    topList.innerHTML = sorted.map((item, i) => `
+        <div class="top-item">
+            <div class="item-rank">${i + 1}</div>
+            <div class="item-info">
+                <h4>${item.name}</h4>
+                <p>${item.quantity} ${item.unit} ${t('remaining')}</p>
+            </div>
+            <div class="item-sales">
+                <span class="sales-value">₹${item.selling_price?.toFixed(0) || 0}</span>
+            </div>
+        </div>
+    `).join('');
+}
+
+// ── AI Insight ────────────────────────────────────────────────────
+function updateAIInsight(sales, inventory) {
+    const insightContent = document.getElementById('aiInsightContent');
+    if (!insightContent) return;
+
+    const lowStock = inventory.filter(p => p.quantity <= p.reorder_level);
+    const totalRevenue = sales.reduce((sum, s) => sum + s.total, 0);
+    const insights = [];
+
+    if (lowStock.length > 0) {
+        insights.push(`<li><i class="fas fa-exclamation-triangle" style="color:#FFB74D"></i> <span>${lowStock.length} item(s) need restocking: ${lowStock.slice(0, 2).map(p => p.name).join(', ')}</span></li>`);
+    }
+    if (totalRevenue > 0) {
+        insights.push(`<li><i class="fas fa-chart-line" style="color:#4CAF50"></i> <span>Total revenue: ₹${totalRevenue.toLocaleString('en-IN', { maximumFractionDigits: 0 })}</span></li>`);
+    }
+    if (inventory.length > 0) {
+        insights.push(`<li><i class="fas fa-lightbulb" style="color:#FF6B35"></i> <span>You have ${inventory.length} products in inventory.</span></li>`);
+    }
+    if (insights.length === 0) {
+        insights.push(`<li><i class="fas fa-lightbulb" style="color:#FF6B35"></i> <span>Add products and record sales to get AI insights!</span></li>`);
+    }
+
+    insightContent.innerHTML = `<p>Based on your data:</p><ul class="insight-list">${insights.join('')}</ul>`;
+}
+
+// ── Fallback ──────────────────────────────────────────────────────
+function showFallbackData() {
+    setEl('todaySales', '₹0');
+    setEl('monthlyRevenue', '₹0');
+    setEl('lowStockCount', '0');
+    setEl('totalItems', '0');
+
+    const activityList = document.getElementById('activityList');
+    if (activityList) activityList.innerHTML = `<p style="padding:20px;color:#999;text-align:center;">${t('noActivity')}</p>`;
+
+    const topList = document.getElementById('topItemsList');
+    if (topList) topList.innerHTML = `<p style="padding:20px;color:#999;text-align:center;">${t('noItems')}</p>`;
+}
+
+function setEl(id, value) {
+    const el = document.getElementById(id);
+    if (el) el.textContent = value;
+}
