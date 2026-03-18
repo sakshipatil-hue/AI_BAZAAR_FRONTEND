@@ -86,7 +86,7 @@ async function doLogin(e) {
             phoneErr.style.display = "none";
 
             setTimeout(() => {
-                window.location.href = "dashboard/dashboard_index.html";
+                window.location.href = "dashboard.html";
             }, 1000);
 
         } else {
