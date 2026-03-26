@@ -1,5 +1,24 @@
 const API_BASE = "https://ai-bazaar-backend-g2yb.onrender.com";
 
+// Clear expired token on login page load
+(async function checkExistingToken() {
+    const token = localStorage.getItem('access_token');
+    if (token) {
+        try {
+            const res = await fetch(`${API_BASE}/api/auth/me`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            if (res.ok) {
+                window.location.href = 'dashboard.html';
+            } else {
+                localStorage.clear(); // Token expired, clear it
+            }
+        } catch (err) {
+            localStorage.clear();
+        }
+    }
+})();
+
 fetch("https://ai-bazaar-backend-g2yb.onrender.com/health").catch(() => {});
 
 document.addEventListener("DOMContentLoaded", function () {
