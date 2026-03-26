@@ -1,77 +1,133 @@
 // AI Bazaar - Dashboard Data & Language JS
 const API_BASE = "https://ai-bazaar-backend-g2yb.onrender.com";
 
-// ── Language System ───────────────────────────────────────────────
+// ── Translations ──────────────────────────────────────────────────
 const TRANSLATIONS = {
     en: {
-        todaySales: "Today's Sales",
-        monthlyRevenue: "Monthly Revenue",
-        lowStock: "Low Stock Items",
-        totalProducts: "Total Products",
-        recentActivity: "Recent Activity",
-        topSelling: "Top Selling Items",
-        aiInsight: "AI Insight",
-        noActivity: "No recent activity. Start recording sales!",
+        // Dashboard
+        todaySales: "Today's Sales", monthlyRevenue: "Monthly Revenue",
+        lowStock: "Low Stock Items", totalProducts: "Total Products",
+        recentActivity: "Recent Activity", topSelling: "Top Selling Items",
+        aiInsight: "AI Insight", noActivity: "No recent activity. Start recording sales!",
         noItems: "No items found. Add products to inventory!",
-        saleRecorded: "Sale recorded",
-        lowStockAlert: "Low stock alert",
-        remaining: "remaining"
+        saleRecorded: "Sale recorded", remaining: "remaining",
+
+        // Inventory
+        inventoryTitle: "Inventory Management",
+        addNewItem: "Add New Item", searchItems: "Search items...",
+        allItems: "All Items", lowStockBtn: "Low Stock", outOfStockBtn: "Out of Stock",
+        itemName: "Item Name", category: "Category", currentStock: "Current Stock",
+        minStock: "Min Stock", status: "Status", actions: "Actions",
+        totalItems: "Total Items", stockValue: "Stock Value",
+        outOfStock: "Out of Stock", inStock: "In Stock",
+
+        // Billing
+        billingTitle: "Billing & Invoices",
+        newInvoice: "New Invoice", customerName: "Customer Name",
+        phoneNumber: "Phone Number", addItem: "Add Item",
+        subtotal: "Subtotal", gst: "GST", totalAmount: "Total Amount",
+        generateInvoice: "Generate Invoice", sendWhatsApp: "Send via WhatsApp",
+
+        // Common
+        save: "Save", cancel: "Cancel", edit: "Edit", delete: "Delete",
+        loading: "Loading...", search: "Search"
     },
     hi: {
-        todaySales: "आज की बिक्री",
-        monthlyRevenue: "मासिक राजस्व",
-        lowStock: "कम स्टॉक",
-        totalProducts: "कुल उत्पाद",
-        recentActivity: "हाल की गतिविधि",
-        topSelling: "सबसे ज्यादा बिकने वाले",
-        aiInsight: "AI सुझाव",
-        noActivity: "कोई गतिविधि नहीं। बिक्री दर्ज करें!",
+        todaySales: "आज की बिक्री", monthlyRevenue: "मासिक राजस्व",
+        lowStock: "कम स्टॉक", totalProducts: "कुल उत्पाद",
+        recentActivity: "हाल की गतिविधि", topSelling: "सबसे ज्यादा बिकने वाले",
+        aiInsight: "AI सुझाव", noActivity: "कोई गतिविधि नहीं। बिक्री दर्ज करें!",
         noItems: "कोई आइटम नहीं। इन्वेंटरी में उत्पाद जोड़ें!",
-        saleRecorded: "बिक्री दर्ज",
-        lowStockAlert: "कम स्टॉक अलर्ट",
-        remaining: "बचा है"
+        saleRecorded: "बिक्री दर्ज", remaining: "बचा है",
+
+        inventoryTitle: "इन्वेंटरी प्रबंधन",
+        addNewItem: "नया आइटम जोड़ें", searchItems: "आइटम खोजें...",
+        allItems: "सभी आइटम", lowStockBtn: "कम स्टॉक", outOfStockBtn: "स्टॉक खत्म",
+        itemName: "आइटम नाम", category: "श्रेणी", currentStock: "वर्तमान स्टॉक",
+        minStock: "न्यूनतम स्टॉक", status: "स्थिति", actions: "क्रियाएं",
+        totalItems: "कुल आइटम", stockValue: "स्टॉक मूल्य",
+        outOfStock: "स्टॉक खत्म", inStock: "स्टॉक में",
+
+        billingTitle: "बिलिंग और चालान",
+        newInvoice: "नया चालान", customerName: "ग्राहक का नाम",
+        phoneNumber: "फोन नंबर", addItem: "आइटम जोड़ें",
+        subtotal: "उप-योग", gst: "जीएसटी", totalAmount: "कुल राशि",
+        generateInvoice: "चालान बनाएं", sendWhatsApp: "WhatsApp पर भेजें",
+
+        save: "सहेजें", cancel: "रद्द करें", edit: "संपादित करें", delete: "हटाएं",
+        loading: "लोड हो रहा है...", search: "खोजें"
     },
     ta: {
-        todaySales: "இன்றைய விற்பனை",
-        monthlyRevenue: "மாத வருவாய்",
-        lowStock: "குறைந்த இருப்பு",
-        totalProducts: "மொத்த பொருட்கள்",
-        recentActivity: "சமீபத்திய செயல்பாடு",
-        topSelling: "அதிகம் விற்பனையானவை",
-        aiInsight: "AI யோசனை",
-        noActivity: "செயல்பாடு இல்லை!",
-        noItems: "பொருட்கள் இல்லை!",
-        saleRecorded: "விற்பனை பதிவு",
-        lowStockAlert: "குறைந்த இருப்பு எச்சரிக்கை",
-        remaining: "மீதமுள்ளது"
+        todaySales: "இன்றைய விற்பனை", monthlyRevenue: "மாத வருவாய்",
+        lowStock: "குறைந்த இருப்பு", totalProducts: "மொத்த பொருட்கள்",
+        recentActivity: "சமீபத்திய செயல்பாடு", topSelling: "அதிகம் விற்பனையானவை",
+        aiInsight: "AI யோசனை", noActivity: "செயல்பாடு இல்லை!",
+        noItems: "பொருட்கள் இல்லை!", saleRecorded: "விற்பனை பதிவு", remaining: "மீதமுள்ளது",
+
+        inventoryTitle: "சரக்கு மேலாண்மை",
+        addNewItem: "புதிய பொருள் சேர்க்க", searchItems: "பொருட்கள் தேடு...",
+        allItems: "அனைத்து பொருட்கள்", lowStockBtn: "குறைந்த இருப்பு", outOfStockBtn: "இருப்பு இல்லை",
+        itemName: "பொருள் பெயர்", category: "வகை", currentStock: "தற்போதைய இருப்பு",
+        minStock: "குறைந்தபட்ச இருப்பு", status: "நிலை", actions: "செயல்கள்",
+        totalItems: "மொத்த பொருட்கள்", stockValue: "இருப்பு மதிப்பு",
+        outOfStock: "இருப்பு இல்லை", inStock: "இருப்பில் உள்ளது",
+
+        billingTitle: "பில்லிங் மற்றும் விலைப்பட்டியல்",
+        newInvoice: "புதிய விலைப்பட்டியல்", customerName: "வாடிக்கையாளர் பெயர்",
+        phoneNumber: "தொலைபேசி எண்", addItem: "பொருள் சேர்க்க",
+        subtotal: "கூட்டுத்தொகை", gst: "ஜிஎஸ்டி", totalAmount: "மொத்த தொகை",
+        generateInvoice: "விலைப்பட்டியல் உருவாக்கு", sendWhatsApp: "WhatsApp மூலம் அனுப்பு",
+
+        save: "சேமி", cancel: "ரத்து", edit: "திருத்து", delete: "நீக்கு",
+        loading: "ஏற்றுகிறது...", search: "தேடு"
     },
     gu: {
-        todaySales: "આજની વેચાણ",
-        monthlyRevenue: "માસિક આવક",
-        lowStock: "ઓછો સ્ટોક",
-        totalProducts: "કુલ ઉત્પાદનો",
-        recentActivity: "તાજેતરની પ્રવૃત્તિ",
-        topSelling: "સૌથી વધુ વેચાતી",
-        aiInsight: "AI સૂઝ",
-        noActivity: "કોઈ પ્રવૃત્તિ નથી!",
-        noItems: "કોઈ આઇટમ નથી!",
-        saleRecorded: "વેચાણ નોંધ્યું",
-        lowStockAlert: "ઓછો સ્ટોક ચેતવણી",
-        remaining: "બાકી"
+        todaySales: "આજની વેચાણ", monthlyRevenue: "માસિક આવક",
+        lowStock: "ઓછો સ્ટોક", totalProducts: "કુલ ઉત્પાદનો",
+        recentActivity: "તાજેતરની પ્રવૃત્તિ", topSelling: "સૌથી વધુ વેચાતી",
+        aiInsight: "AI સૂઝ", noActivity: "કોઈ પ્રવૃત્તિ નથી!",
+        noItems: "કોઈ આઇટમ નથી!", saleRecorded: "વેચાણ નોંધ્યું", remaining: "બાકી",
+
+        inventoryTitle: "ઇન્વેન્ટરી મેનેજમેન્ટ",
+        addNewItem: "નવી આઇટમ ઉમેરો", searchItems: "આઇટમ શોધો...",
+        allItems: "બધી આઇટમ", lowStockBtn: "ઓછો સ્ટોક", outOfStockBtn: "સ્ટોક ખાલી",
+        itemName: "આઇટમ નામ", category: "શ્રેણી", currentStock: "વર્તમાન સ્ટોક",
+        minStock: "ન્યૂનતમ સ્ટોક", status: "સ્થિતિ", actions: "ક્રિયાઓ",
+        totalItems: "કુલ આઇટમ", stockValue: "સ્ટોક મૂલ્ય",
+        outOfStock: "સ્ટોક ખાલી", inStock: "સ્ટોકમાં",
+
+        billingTitle: "બિલિંગ અને ઇન્વોઇસ",
+        newInvoice: "નવું ઇન્વોઇસ", customerName: "ગ્રાહકનું નામ",
+        phoneNumber: "ફોન નંબર", addItem: "આઇટમ ઉમેરો",
+        subtotal: "પેટા-કુલ", gst: "જીએસટી", totalAmount: "કુલ રકમ",
+        generateInvoice: "ઇન્વોઇસ બનાવો", sendWhatsApp: "WhatsApp પર મોકલો",
+
+        save: "સાચવો", cancel: "રદ કરો", edit: "સંપાદિત કરો", delete: "કાઢો",
+        loading: "લોડ થઈ રહ્યું છે...", search: "શોધો"
     },
     te: {
-        todaySales: "నేటి అమ్మకాలు",
-        monthlyRevenue: "నెలవారీ ఆదాయం",
-        lowStock: "తక్కువ స్టాక్",
-        totalProducts: "మొత్తం ఉత్పత్తులు",
-        recentActivity: "ఇటీవలి కార్యాచరణ",
-        topSelling: "అత్యధికంగా అమ్ముడైనవి",
-        aiInsight: "AI అంతర్దృష్టి",
-        noActivity: "కార్యాచరణ లేదు!",
-        noItems: "అంశాలు లేవు!",
-        saleRecorded: "అమ్మకం నమోదు",
-        lowStockAlert: "తక్కువ స్టాక్ హెచ్చరిక",
-        remaining: "మిగిలి ఉంది"
+        todaySales: "నేటి అమ్మకాలు", monthlyRevenue: "నెలవారీ ఆదాయం",
+        lowStock: "తక్కువ స్టాక్", totalProducts: "మొత్తం ఉత్పత్తులు",
+        recentActivity: "ఇటీవలి కార్యాచరణ", topSelling: "అత్యధికంగా అమ్ముడైనవి",
+        aiInsight: "AI అంతర్దృష్టి", noActivity: "కార్యాచరణ లేదు!",
+        noItems: "అంశాలు లేవు!", saleRecorded: "అమ్మకం నమోదు", remaining: "మిగిలి ఉంది",
+
+        inventoryTitle: "జాబితా నిర్వహణ",
+        addNewItem: "కొత్త వస్తువు జోడించు", searchItems: "వస్తువులు వెతకండి...",
+        allItems: "అన్ని వస్తువులు", lowStockBtn: "తక్కువ స్టాక్", outOfStockBtn: "స్టాక్ లేదు",
+        itemName: "వస్తువు పేరు", category: "వర్గం", currentStock: "ప్రస్తుత స్టాక్",
+        minStock: "కనీస స్టాక్", status: "స్థితి", actions: "చర్యలు",
+        totalItems: "మొత్తం వస్తువులు", stockValue: "స్టాక్ విలువ",
+        outOfStock: "స్టాక్ లేదు", inStock: "స్టాక్‌లో ఉంది",
+
+        billingTitle: "బిల్లింగ్ మరియు ఇన్వాయిస్",
+        newInvoice: "కొత్త ఇన్వాయిస్", customerName: "కస్టమర్ పేరు",
+        phoneNumber: "ఫోన్ నంబర్", addItem: "వస్తువు జోడించు",
+        subtotal: "ఉప-మొత్తం", gst: "జిఎస్టి", totalAmount: "మొత్తం మొత్తం",
+        generateInvoice: "ఇన్వాయిస్ రూపొందించు", sendWhatsApp: "WhatsApp ద్వారా పంపు",
+
+        save: "సేవ్ చేయి", cancel: "రద్దు చేయి", edit: "సవరించు", delete: "తొలగించు",
+        loading: "లోడ్ అవుతోంది...", search: "వెతకండి"
     }
 };
 
@@ -82,6 +138,7 @@ function t(key) {
 }
 
 function applyLanguage() {
+    // Dashboard cards
     const cardTitles = document.querySelectorAll('.summary-card h3');
     if (cardTitles[0]) cardTitles[0].textContent = t('todaySales');
     if (cardTitles[1]) cardTitles[1].textContent = t('monthlyRevenue');
@@ -96,6 +153,58 @@ function applyLanguage() {
 
     const insightHeader = document.querySelector('.ai-insight-card h3');
     if (insightHeader) insightHeader.textContent = t('aiInsight');
+
+    // Inventory section
+    const invTitle = document.querySelector('#inventory .section-header h2');
+    if (invTitle) invTitle.textContent = t('inventoryTitle');
+
+    const addBtn = document.getElementById('addProductBtn');
+    if (addBtn) addBtn.innerHTML = `<i class="fas fa-plus"></i> ${t('addNewItem')}`;
+
+    const searchInput = document.getElementById('inventorySearch');
+    if (searchInput) searchInput.placeholder = t('searchItems');
+
+    // Filter buttons
+    const filterBtns = document.querySelectorAll('#inventory .filter-btn');
+    if (filterBtns[0]) filterBtns[0].textContent = t('allItems');
+    if (filterBtns[1]) filterBtns[1].textContent = t('lowStockBtn');
+    if (filterBtns[2]) filterBtns[2].textContent = t('outOfStockBtn');
+
+    // Table headers
+    const headers = document.querySelectorAll('#inventory .inventory-table thead th');
+    const headerKeys = ['itemName', 'category', 'currentStock', 'minStock', 'status', 'actions'];
+    headers.forEach((th, i) => {
+        if (headerKeys[i]) th.textContent = t(headerKeys[i]);
+    });
+
+    // Summary cards in inventory
+    const summaryCards = document.querySelectorAll('#inventory .inventory-summary .summary-card h4');
+    if (summaryCards[0]) summaryCards[0].textContent = t('totalItems');
+    if (summaryCards[1]) summaryCards[1].textContent = t('lowStock');
+    if (summaryCards[2]) summaryCards[2].textContent = t('outOfStock');
+    if (summaryCards[3]) summaryCards[3].textContent = t('stockValue');
+
+    // Billing section
+    const billingTitle = document.querySelector('#billing .section-header h2');
+    if (billingTitle) billingTitle.textContent = t('billingTitle');
+
+    const newInvoiceBtn = document.querySelector('.new-invoice-btn');
+    if (newInvoiceBtn) newInvoiceBtn.innerHTML = `<i class="fas fa-plus"></i> ${t('newInvoice')}`;
+
+    const custNameLabel = document.querySelector('label[for="customerName"]');
+    if (custNameLabel) custNameLabel.textContent = t('customerName');
+
+    const custPhoneLabel = document.querySelector('label[for="customerPhone"]');
+    if (custPhoneLabel) custPhoneLabel.textContent = t('phoneNumber');
+
+    const addItemRowBtn = document.getElementById('addItemRow');
+    if (addItemRowBtn) addItemRowBtn.innerHTML = `<i class="fas fa-plus"></i> ${t('addItem')}`;
+
+    const generateBtn = document.querySelector('.generate-btn');
+    if (generateBtn) generateBtn.innerHTML = `<i class="fas fa-print"></i> ${t('generateInvoice')}`;
+
+    const sendBtn = document.querySelector('.send-btn');
+    if (sendBtn) sendBtn.innerHTML = `<i class="fab fa-whatsapp"></i> ${t('sendWhatsApp')}`;
 }
 
 // ── Language Selector ─────────────────────────────────────────────
