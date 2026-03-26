@@ -266,3 +266,6 @@ function showInvToast(message, type = 'success') {
         console.log(`[${type}] ${message}`);
     }
 }
+// Make functions global for onclick handlers
+window.openEditModal = openEditModal;
+window.deleteProduct = deleteProduct;
