@@ -17,22 +17,22 @@ class RegisterUploadManager {
     setupEventListeners() {
         // Upload area click
         const uploadArea = document.getElementById('uploadArea');
-        const fileInput = document.getElementById('fileInput');
+        const registerUpload = document.getElementById('registerUpload');
         const selectFileBtn = document.getElementById('selectFileBtn');
         
-        if (uploadArea && fileInput) {
+        if (uploadArea && registerUpload) {
             uploadArea.addEventListener('click', () => {
-                fileInput.click();
+                registerUpload.click();
             });
             
             if (selectFileBtn) {
                 selectFileBtn.addEventListener('click', (e) => {
                     e.stopPropagation();
-                    fileInput.click();
+                    registerUpload.click();
                 });
             }
             
-            fileInput.addEventListener('change', (e) => {
+            registerUpload.addEventListener('change', (e) => {
                 this.handleFileSelect(e.target.files[0]);
             });
         }
@@ -159,7 +159,7 @@ class RegisterUploadManager {
         document.getElementById('analysisProgress').style.display = 'none';
         document.getElementById('analysisResults').style.display = 'none';
         
-        document.getElementById('fileInput').value = '';
+        document.getElementById('registerUpload').value = '';
         this.uploadedFile = null;
         this.previewUrl = null;
         this.analysisResults = null;
