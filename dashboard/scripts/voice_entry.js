@@ -51,9 +51,9 @@ class VoiceEntryManager {
 
     setupSimulationMode() {
         // For browsers without speech recognition, use simulated responses
-        const micButton = document.getElementById('micButton');
-        if (micButton) {
-            micButton.addEventListener('click', () => {
+        const micButtonLarge = document.getElementById('micButtonLarge');
+        if (micButtonLarge) {
+            micButtonLarge.addEventListener('click', () => {
                 if (!this.isListening) {
                     this.simulateListening();
                 } else {
@@ -93,10 +93,10 @@ class VoiceEntryManager {
 
     onListeningStart() {
         this.isListening = true;
-        const micButton = document.getElementById('micButton');
+        const micButtonLarge = document.getElementById('micButtonLarge');
         const voiceWave = document.getElementById('voiceWaveContainer');
         
-        if (micButton) micButton.classList.add('active');
+        if (micButtonLarge) micButtonLarge.classList.add('active');
         if (voiceWave) voiceWave.classList.add('active');
         
         this.showToast('Listening... Speak now', 'info');
@@ -104,10 +104,10 @@ class VoiceEntryManager {
 
     onListeningEnd() {
         this.isListening = false;
-        const micButton = document.getElementById('micButton');
+        const micButtonLarge = document.getElementById('micButtonLarge');
         const voiceWave = document.getElementById('voiceWaveContainer');
         
-        if (micButton) micButton.classList.remove('active');
+        if (micButtonLarge) micButtonLarge.classList.remove('active');
         if (voiceWave) voiceWave.classList.remove('active');
     }
 
@@ -169,10 +169,10 @@ class VoiceEntryManager {
 
     simulateListening() {
         this.isListening = true;
-        const micButton = document.getElementById('micButton');
+        const micButtonLarge = document.getElementById('micButtonLarge');
         const voiceWave = document.getElementById('voiceWaveContainer');
         
-        micButton.classList.add('active');
+        micButtonLarge.classList.add('active');
         voiceWave.classList.add('active');
         
         this.showToast('Listening... (Simulation Mode)', 'info');
@@ -180,7 +180,7 @@ class VoiceEntryManager {
         // Simulate listening for 3 seconds
         setTimeout(() => {
             this.isListening = false;
-            micButton.classList.remove('active');
+            micButtonLarge.classList.remove('active');
             voiceWave.classList.remove('active');
             
             // Simulate random command
@@ -201,10 +201,10 @@ class VoiceEntryManager {
             this.recognition.stop();
         } else {
             this.isListening = false;
-            const micButton = document.getElementById('micButton');
+            const micButtonLarge = document.getElementById('micButtonLarge');
             const voiceWave = document.getElementById('voiceWaveContainer');
             
-            micButton.classList.remove('active');
+            micButtonLarge.classList.remove('active');
             voiceWave.classList.remove('active');
         }
     }
@@ -255,7 +255,7 @@ class VoiceEntryManager {
     }
 
     addMessageToConversation(text, sender) {
-        const conversation = document.querySelector('.conversation-messages');
+        const conversation = document.getElementById('voiceConversation');
         if (!conversation) return;
         
         const messageDiv = document.createElement('div');
@@ -281,7 +281,7 @@ class VoiceEntryManager {
     }
 
     showTypingIndicator() {
-        const conversation = document.querySelector('.conversation-messages');
+        const conversation = document.getElementById('voiceConversation');
         if (!conversation) return;
         
         const indicator = document.createElement('div');
@@ -305,7 +305,7 @@ class VoiceEntryManager {
     }
 
     clearConversation() {
-        const conversation = document.querySelector('.conversation-messages');
+        const conversation = document.getElementById('voiceConversation');
         if (conversation) {
             conversation.innerHTML = `
                 <div class="message ai">
