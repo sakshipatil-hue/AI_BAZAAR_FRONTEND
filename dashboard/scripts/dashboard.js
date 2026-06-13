@@ -1,5 +1,5 @@
 // AI Bazaar - Dashboard Data & Language JS
-const API_BASE = "https://ai-bazaar-backend-g2yb.onrender.com";
+const API_BASE = " https://ai-bazaar-backend-29o3.onrender.com";
 
 // ── Translations ──────────────────────────────────────────────────
 const TRANSLATIONS = {

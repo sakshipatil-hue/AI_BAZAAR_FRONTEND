@@ -1,4 +1,4 @@
-const API_BASE = "https://ai-bazaar-backend-g2yb.onrender.com";
+const API_BASE = " https://ai-bazaar-backend-29o3.onrender.com";
 
 // Clear expired token on login page load
 (async function checkExistingToken() {
@@ -19,7 +19,7 @@ const API_BASE = "https://ai-bazaar-backend-g2yb.onrender.com";
     }
 })();
 
-fetch("https://ai-bazaar-backend-g2yb.onrender.com/health").catch(() => {});
+fetch(" https://ai-bazaar-backend-29o3.onrender.com/health").catch(() => {});
 
 document.addEventListener("DOMContentLoaded", function () {
     if (localStorage.getItem("access_token")) {

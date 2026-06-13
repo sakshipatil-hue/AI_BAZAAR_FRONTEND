@@ -1,5 +1,5 @@
 // AI Bazaar - Inventory Manager (Backend Connected)
-const INV_API = "https://ai-bazaar-backend-g2yb.onrender.com";
+const INV_API = " https://ai-bazaar-backend-29o3.onrender.com";
 
 async function invFetch(path, options = {}) {
     const token = localStorage.getItem('access_token');
