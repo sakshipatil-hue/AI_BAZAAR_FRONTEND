@@ -331,7 +331,7 @@
                                 </div>
                                 <p class="listening-text">Listening...</p>
                             </div>
-                            <button class="mic-button-large" id="micButtonLarge">
+                            <button class="mic-button-large" id="micButtonLarge" onclick="testMic()">
                                 <i class="fas fa-microphone"></i>
                             </button>
                             <p class="voice-hint">Click the microphone and speak naturally</p>
@@ -719,5 +719,16 @@
             }
         });
     </script>
+    <script>
+async function testMic() {
+    try {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        alert("Mic working! 🎤");
+        stream.getTracks().forEach(t => t.stop());
+    } catch (err) {
+        alert("Mic blocked: " + err.message);
+    }
+}
+</script>
 </body>
 </html>
