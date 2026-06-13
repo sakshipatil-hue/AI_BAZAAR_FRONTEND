@@ -116,6 +116,30 @@ async function sendAudioToBackend(audioBlob) {
             const data = await res.json();
             addMessage(`You said: "${data.transcript}"`, 'user');
             addMessage(data.reply_text, 'ai');
+
+            // Show action result
+            if (data.action_result) {
+                const result = data.action_result;
+                if (result.type === 'sale') {
+                    const sold = result.items.filter(i => i.status === 'sold');
+                    const notFound = result.items.filter(i => i.status !== 'sold');
+                    if (sold.length > 0) {
+                        addMessage(`✅ Sale recorded! Total: ₹${result.total.toFixed(2)}`, 'ai');
+                        // Refresh dashboard data
+                        if (window.loadDashboardData) loadDashboardData();
+                        if (window.dashboardCharts) dashboardCharts.initAllCharts();
+                    }
+                    if (notFound.length > 0) {
+                        addMessage(`⚠️ Not found in inventory: ${notFound.map(i => i.name).join(', ')}`, 'ai');
+                    }
+                } else if (result.type === 'stock_add') {
+                    const updated = result.items.filter(i => i.status === 'updated');
+                    if (updated.length > 0) {
+                        addMessage(`✅ Stock updated! ${updated.map(i => `${i.name}: ${i.new_stock} units`).join(', ')}`, 'ai');
+                        if (window.loadInventory) loadInventory();
+                    }
+                }
+            }
         } else {
             const err = await res.json();
             addMessage('❌ ' + (err.detail || 'Voice processing failed'), 'ai');
