@@ -1,383 +1,159 @@
-// Voice Entry Module - Handles voice recording, language switching, and command processing
+// AI Bazaar - Voice Entry
+const VOICE_API = "https://ai-bazaar-backend-29o3.onrender.com";
 
-class VoiceEntryManager {
-    constructor() {
-        this.isListening = false;
-        this.recognition = null;
-        this.currentLanguage = 'hi'; // Default Hindi
-        this.conversation = [];
-        this.mediaRecorder = null;
-        this.audioChunks = [];
-        
-        // Supported languages with their codes
-        this.languages = {
-            'hi': { name: 'हिंदी', code: 'hi-IN' },
-            'en': { name: 'English', code: 'en-IN' },
-            'ta': { name: 'தமிழ்', code: 'ta-IN' },
-            'te': { name: 'తెలుగు', code: 'te-IN' },
-            'bn': { name: 'বাংলা', code: 'bn-IN' },
-            'gu': { name: 'ગુજરાતી', code: 'gu-IN' },
-            'mr': { name: 'मराठी', code: 'mr-IN' }
-        };
-        
-        this.init();
-    }
+let mediaRecorder = null;
+let audioChunks = [];
+let isRecording = false;
+let selectedLang = 'hi';
 
-    init() {
-        this.setupVoiceRecognition();
-        this.setupEventListeners();
-        this.loadSampleCommands();
-    }
+const langMap = {
+    hindi: 'hi', english: 'en',
+    tamil: 'ta', gujarati: 'gu', telugu: 'te'
+};
 
-    setupVoiceRecognition() {
-        // Check if browser supports SpeechRecognition
-        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-        
-        if (SpeechRecognition) {
-            this.recognition = new SpeechRecognition();
-            this.recognition.continuous = false;
-            this.recognition.interimResults = false;
-            this.recognition.maxAlternatives = 1;
-            
-            this.recognition.onstart = () => this.onListeningStart();
-            this.recognition.onend = () => this.onListeningEnd();
-            this.recognition.onerror = (event) => this.onListeningError(event);
-            this.recognition.onresult = (event) => this.onSpeechResult(event);
-        } else {
-            console.warn('Speech recognition not supported, using simulation mode');
-            this.setupSimulationMode();
-        }
-    }
+// Wait for everything to load
+window.addEventListener('load', function () {
+    setupVoiceEntry();
+});
 
-    setupSimulationMode() {
-        // For browsers without speech recognition, use simulated responses
-        const micButtonLarge = document.getElementById('micButtonLarge');
-        if (micButtonLarge) {
-            micButtonLarge.addEventListener('click', () => {
-                if (!this.isListening) {
-                    this.simulateListening();
-                } else {
-                    this.stopListening();
-                }
-            });
-        }
-    }
-
-    setupEventListeners() {
-        // Language selector
-        const langSelect = document.getElementById('voiceLanguage');
-        if (langSelect) {
-            langSelect.addEventListener('change', (e) => {
-                this.currentLanguage = e.target.value;
-                if (this.recognition) {
-                    this.recognition.lang = this.languages[this.currentLanguage].code;
-                }
-                this.showToast(`Language switched to ${this.languages[this.currentLanguage].name}`, 'info');
-            });
-        }
-
-        // Command chips
-        document.querySelectorAll('.command-chip').forEach(chip => {
-            chip.addEventListener('click', () => {
-                const command = chip.textContent.trim();
-                this.processCommand(command);
-            });
+function setupVoiceEntry() {
+    // Language buttons
+    document.querySelectorAll('.lang-option').forEach(btn => {
+        btn.addEventListener('click', function () {
+            document.querySelectorAll('.lang-option').forEach(b => b.classList.remove('active'));
+            this.classList.add('active');
+            selectedLang = langMap[this.getAttribute('data-lang')] || 'hi';
         });
+    });
 
-        // Clear conversation button
-        const clearBtn = document.querySelector('.clear-btn');
-        if (clearBtn) {
-            clearBtn.addEventListener('click', () => this.clearConversation());
-        }
+    // Mic button
+    const micBtn = document.getElementById('micButtonLarge');
+    if (micBtn) {
+        micBtn.addEventListener('click', toggleRecording);
+        console.log('✅ Mic button initialized');
+    } else {
+        console.error('❌ Mic button not found!');
     }
 
-    onListeningStart() {
-        this.isListening = true;
-        const micButtonLarge = document.getElementById('micButtonLarge');
-        const voiceWave = document.getElementById('voiceWaveContainer');
-        
-        if (micButtonLarge) micButtonLarge.classList.add('active');
-        if (voiceWave) voiceWave.classList.add('active');
-        
-        this.showToast('Listening... Speak now', 'info');
-    }
+    // Quick action buttons
+    document.querySelectorAll('.action-btn[data-action]').forEach(btn => {
+        btn.addEventListener('click', function () {
+            handleQuickAction(this.getAttribute('data-action'));
+        });
+    });
+}
 
-    onListeningEnd() {
-        this.isListening = false;
-        const micButtonLarge = document.getElementById('micButtonLarge');
-        const voiceWave = document.getElementById('voiceWaveContainer');
-        
-        if (micButtonLarge) micButtonLarge.classList.remove('active');
-        if (voiceWave) voiceWave.classList.remove('active');
-    }
-
-    onListeningError(event) {
-        console.error('Speech recognition error:', event.error);
-        this.onListeningEnd();
-        
-        let errorMessage = 'Could not understand. Please try again.';
-        if (event.error === 'no-speech') {
-            errorMessage = 'No speech detected. Please try again.';
-        } else if (event.error === 'audio-capture') {
-            errorMessage = 'No microphone found. Please check your microphone.';
-        } else if (event.error === 'not-allowed') {
-            errorMessage = 'Microphone access denied. Please allow microphone access.';
-        }
-        
-        this.showToast(errorMessage, 'error');
-    }
-
-    onSpeechResult(event) {
-        const transcript = event.results[0][0].transcript;
-        this.processCommand(transcript);
-    }
-
-    async processCommand(command) {
-        // Add user message to conversation
-        this.addMessageToConversation(command, 'user');
-        
-        // Show typing indicator
-        this.showTypingIndicator();
-        
-        try {
-            // Try to use real API if available
-            let response;
-            if (window.api) {
-                response = await window.api.sendVoiceTextCommand(command, this.currentLanguage);
-            } else {
-                // Simulate API response
-                response = await this.simulateAIResponse(command);
-            }
-            
-            // Remove typing indicator
-            this.hideTypingIndicator();
-            
-            // Add AI response to conversation
-            this.addMessageToConversation(response.message || response, 'ai');
-            
-            // Process any actions from the response
-            if (response.action) {
-                this.handleAction(response.action, response.data);
-            }
-            
-        } catch (error) {
-            console.error('Error processing command:', error);
-            this.hideTypingIndicator();
-            this.addMessageToConversation('Sorry, I encountered an error. Please try again.', 'ai');
-        }
-    }
-
-    simulateListening() {
-        this.isListening = true;
-        const micButtonLarge = document.getElementById('micButtonLarge');
-        const voiceWave = document.getElementById('voiceWaveContainer');
-        
-        micButtonLarge.classList.add('active');
-        voiceWave.classList.add('active');
-        
-        this.showToast('Listening... (Simulation Mode)', 'info');
-        
-        // Simulate listening for 3 seconds
-        setTimeout(() => {
-            this.isListening = false;
-            micButtonLarge.classList.remove('active');
-            voiceWave.classList.remove('active');
-            
-            // Simulate random command
-            const commands = [
-                "आज 5 kg आटा बिका",
-                "चीनी का स्टॉक कितना है?",
-                "रमेश के लिए बिल बनाओ",
-                "आज की बिक्री कितनी है?",
-                "2 liter दूध और 1 kg चीनी बेची"
-            ];
-            const randomCommand = commands[Math.floor(Math.random() * commands.length)];
-            this.processCommand(randomCommand);
-        }, 3000);
-    }
-
-    stopListening() {
-        if (this.recognition) {
-            this.recognition.stop();
-        } else {
-            this.isListening = false;
-            const micButtonLarge = document.getElementById('micButtonLarge');
-            const voiceWave = document.getElementById('voiceWaveContainer');
-            
-            micButtonLarge.classList.remove('active');
-            voiceWave.classList.remove('active');
-        }
-    }
-
-    async simulateAIResponse(command) {
-        // Simulate AI processing delay
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        
-        const commandLower = command.toLowerCase();
-        
-        // Simple rule-based responses
-        if (commandLower.includes('आटा') || commandLower.includes('atta')) {
-            const match = commandLower.match(/(\d+)/);
-            const quantity = match ? match[1] : '5';
-            return {
-                message: `✓ Added! ${quantity} kg atta recorded. Current stock: 15 kg remaining.`,
-                action: 'update_inventory',
-                data: { item: 'atta', quantity: quantity }
-            };
-        }
-        else if (commandLower.includes('चीनी') || commandLower.includes('sugar')) {
-            return {
-                message: `You have 8 kg sugar in stock. Low stock alert at 5 kg.`,
-                action: 'show_stock',
-                data: { item: 'sugar', stock: 8 }
-            };
-        }
-        else if (commandLower.includes('बिल') || commandLower.includes('invoice')) {
-            return {
-                message: `Creating invoice for Ramesh. Total: ₹450. Would you like to print?`,
-                action: 'create_invoice',
-                data: { customer: 'Ramesh', amount: 450 }
-            };
-        }
-        else if (commandLower.includes('बिक्री') || commandLower.includes('sales')) {
-            return {
-                message: `Today's total sales: ₹5,250 from 24 transactions. Best seller: Atta (15 kg)`,
-                action: 'show_sales',
-                data: { total: 5250, transactions: 24 }
-            };
-        }
-        else {
-            return {
-                message: `I understood your command. How else can I help you?`,
-                action: null
-            };
-        }
-    }
-
-    addMessageToConversation(text, sender) {
-        const conversation = document.getElementById('voiceConversation');
-        if (!conversation) return;
-        
-        const messageDiv = document.createElement('div');
-        messageDiv.className = `message ${sender}`;
-        
-        if (sender === 'user') {
-            messageDiv.innerHTML = `
-                <div class="bubble">${text}</div>
-                <div class="avatar"><i class="fas fa-user"></i></div>
-            `;
-        } else {
-            messageDiv.innerHTML = `
-                <div class="avatar"><i class="fas fa-robot"></i></div>
-                <div class="bubble">${text}</div>
-            `;
-        }
-        
-        conversation.appendChild(messageDiv);
-        conversation.scrollTop = conversation.scrollHeight;
-        
-        // Store in conversation history
-        this.conversation.push({ sender, text, timestamp: new Date() });
-    }
-
-    showTypingIndicator() {
-        const conversation = document.getElementById('voiceConversation');
-        if (!conversation) return;
-        
-        const indicator = document.createElement('div');
-        indicator.className = 'message ai typing-indicator';
-        indicator.id = 'typingIndicator';
-        indicator.innerHTML = `
-            <div class="avatar"><i class="fas fa-robot"></i></div>
-            <div class="bubble">
-                <span class="dot"></span>
-                <span class="dot"></span>
-                <span class="dot"></span>
-            </div>
-        `;
-        conversation.appendChild(indicator);
-        conversation.scrollTop = conversation.scrollHeight;
-    }
-
-    hideTypingIndicator() {
-        const indicator = document.getElementById('typingIndicator');
-        if (indicator) indicator.remove();
-    }
-
-    clearConversation() {
-        const conversation = document.getElementById('voiceConversation');
-        if (conversation) {
-            conversation.innerHTML = `
-                <div class="message ai">
-                    <div class="avatar"><i class="fas fa-robot"></i></div>
-                    <div class="bubble">
-                        <p>Hello! I'm ready to help. Try saying something like "Add 2 kg sugar to sales"</p>
-                    </div>
-                </div>
-            `;
-        }
-        this.conversation = [];
-    }
-
-    handleAction(action, data) {
-        switch(action) {
-            case 'update_inventory':
-                // Trigger inventory refresh
-                if (window.dashboard && window.dashboard.loadInventoryData) {
-                    window.dashboard.loadInventoryData();
-                }
-                break;
-            case 'create_invoice':
-                // Switch to billing tab
-                if (window.dashboard) {
-                    window.dashboard.switchSection('billing');
-                }
-                break;
-            case 'show_sales':
-                // Update dashboard charts
-                if (window.dashboard && window.dashboard.updateDashboardData) {
-                    window.dashboard.updateDashboardData();
-                }
-                break;
-        }
-    }
-
-    loadSampleCommands() {
-        // Sample commands in different languages
-        this.sampleCommands = {
-            'hi': [
-                "आज 5 kg आटा बिका",
-                "चीनी का स्टॉक कितना है?",
-                "रमेश के लिए बिल बनाओ",
-                "आज की बिक्री कितनी है?"
-            ],
-            'en': [
-                "Add 5 kg atta to sales",
-                "What's the stock of sugar?",
-                "Create invoice for Ramesh",
-                "Show today's sales"
-            ],
-            'ta': [
-                "இன்று 5 kg மாவு விற்பனை",
-                "சர்க்கரை இருப்பு எவ்வளவு?",
-                "ரமேஷ்க்கு இன்வாய்ஸ் உருவாக்கு",
-                "இன்றைய விற்பனை எவ்வளவு?"
-            ]
-        };
-    }
-
-    showToast(message, type = 'info') {
-        if (window.showToast) {
-            window.showToast(message, type);
-        } else {
-            console.log(`[${type}] ${message}`);
-        }
+async function toggleRecording() {
+    if (isRecording) {
+        stopRecording();
+    } else {
+        await startRecording();
     }
 }
 
-// Initialize voice entry when dashboard loads
-document.addEventListener('DOMContentLoaded', () => {
-    if (document.getElementById('voice-entry')) {
-        window.voiceEntry = new VoiceEntryManager();
+async function startRecording() {
+    try {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        mediaRecorder = new MediaRecorder(stream);
+        audioChunks = [];
+
+        mediaRecorder.ondataavailable = (e) => {
+            if (e.data.size > 0) audioChunks.push(e.data);
+        };
+
+        mediaRecorder.onstop = async () => {
+            const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+            stream.getTracks().forEach(track => track.stop());
+            await sendAudioToBackend(audioBlob);
+        };
+
+        mediaRecorder.start();
+        isRecording = true;
+
+        const micBtn = document.getElementById('micButtonLarge');
+        if (micBtn) {
+            micBtn.style.background = '#F44336';
+            micBtn.innerHTML = '<i class="fas fa-stop"></i>';
+        }
+
+        addMessage('🎤 Listening... Speak now! Click again to stop.', 'ai');
+
+    } catch (err) {
+        console.error('Mic error:', err);
+        addMessage('❌ ' + err.message, 'ai');
     }
-});
+}
+
+function stopRecording() {
+    if (mediaRecorder && isRecording) {
+        mediaRecorder.stop();
+        isRecording = false;
+
+        const micBtn = document.getElementById('micButtonLarge');
+        if (micBtn) {
+            micBtn.style.background = '';
+            micBtn.innerHTML = '<i class="fas fa-microphone"></i>';
+        }
+
+        addMessage('⏳ Processing your voice...', 'ai');
+    }
+}
+
+async function sendAudioToBackend(audioBlob) {
+    try {
+        const token = localStorage.getItem('access_token');
+        const formData = new FormData();
+        formData.append('audio', audioBlob, 'recording.webm');
+        formData.append('language', selectedLang);
+
+        const res = await fetch(`${VOICE_API}/api/voice/`, {
+            method: 'POST',
+            headers: { 'Authorization': `Bearer ${token}` },
+            body: formData
+        });
+
+        if (res.ok) {
+            const data = await res.json();
+            addMessage(`You said: "${data.transcript}"`, 'user');
+            addMessage(data.reply_text, 'ai');
+        } else {
+            const err = await res.json();
+            addMessage('❌ ' + (err.detail || 'Voice processing failed'), 'ai');
+        }
+    } catch (err) {
+        addMessage('❌ Cannot connect to server: ' + err.message, 'ai');
+    }
+}
+
+function handleQuickAction(action) {
+    const messages = {
+        sold: '🛒 What items did you sell? Click mic and speak!',
+        purchased: '📦 What stock did you receive? Click mic and speak!',
+        customer: '👤 New customer details? Click mic and speak!',
+        expense: '💰 What was the expense? Click mic and speak!'
+    };
+    if (messages[action]) addMessage(messages[action], 'ai');
+}
+
+function addMessage(text, type) {
+    const conversation = document.getElementById('voiceConversation');
+    if (!conversation) return;
+
+    const msg = document.createElement('div');
+    msg.className = `message ${type}`;
+
+    if (type === 'ai') {
+        msg.innerHTML = `
+            <div class="avatar"><i class="fas fa-robot"></i></div>
+            <div class="bubble"><p>${text}</p></div>
+        `;
+    } else {
+        msg.innerHTML = `
+            <div class="bubble"><p>${text}</p></div>
+            <div class="avatar"><i class="fas fa-user"></i></div>
+        `;
+    }
+
+    conversation.appendChild(msg);
+    conversation.scrollTop = conversation.scrollHeight;
+}
