@@ -1,4 +1,6 @@
-// Register Upload Module - Handles file upload, image preview, AI processing simulation
+// Register Upload Module - AI Bazaar with Groq Vision OCR
+
+const SCAN_API = "https://ai-bazaar-backend-29o3.onrender.com";
 
 class RegisterUploadManager {
     constructor() {
@@ -15,16 +17,19 @@ class RegisterUploadManager {
     }
 
     setupEventListeners() {
-        // Upload area click
         const uploadArea = document.getElementById('uploadArea');
         const registerUpload = document.getElementById('registerUpload');
+        const uploadBtn = document.getElementById('uploadBtn');
         const selectFileBtn = document.getElementById('selectFileBtn');
         
         if (uploadArea && registerUpload) {
-            uploadArea.addEventListener('click', () => {
-                registerUpload.click();
-            });
-            
+            if (uploadBtn) {
+                uploadBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    registerUpload.click();
+                });
+            }
+
             if (selectFileBtn) {
                 selectFileBtn.addEventListener('click', (e) => {
                     e.stopPropagation();
@@ -37,36 +42,34 @@ class RegisterUploadManager {
             });
         }
         
+        // Remove image button
+        const removeImage = document.getElementById('removeImage');
+        if (removeImage) {
+            removeImage.addEventListener('click', () => this.resetUpload());
+        }
+
         // Close preview button
         const closePreview = document.querySelector('.close-preview');
         if (closePreview) {
-            closePreview.addEventListener('click', () => {
-                this.resetUpload();
-            });
+            closePreview.addEventListener('click', () => this.resetUpload());
         }
         
         // Analyze button
         const analyzeBtn = document.getElementById('analyzeBtn');
         if (analyzeBtn) {
-            analyzeBtn.addEventListener('click', () => {
-                this.startAnalysis();
-            });
+            analyzeBtn.addEventListener('click', () => this.startAnalysis());
         }
         
         // Import data button
         const importBtn = document.getElementById('importDataBtn');
         if (importBtn) {
-            importBtn.addEventListener('click', () => {
-                this.importToDashboard();
-            });
+            importBtn.addEventListener('click', () => this.importToDashboard());
         }
         
         // Download report button
         const downloadBtn = document.getElementById('downloadReportBtn');
         if (downloadBtn) {
-            downloadBtn.addEventListener('click', () => {
-                this.downloadReport();
-            });
+            downloadBtn.addEventListener('click', () => this.downloadReport());
         }
     }
 
@@ -102,14 +105,12 @@ class RegisterUploadManager {
     handleFileSelect(file) {
         if (!file) return;
         
-        // Validate file type
-        const validTypes = ['image/jpeg', 'image/png', 'image/jpg', 'application/pdf'];
+        const validTypes = ['image/jpeg', 'image/png', 'image/jpg'];
         if (!validTypes.includes(file.type)) {
-            this.showToast('Please upload a valid image (JPG, PNG) or PDF file', 'error');
+            this.showToast('Please upload JPG or PNG image', 'error');
             return;
         }
         
-        // Validate file size (max 10MB)
         if (file.size > 10 * 1024 * 1024) {
             this.showToast('File size must be less than 10MB', 'error');
             return;
@@ -117,154 +118,185 @@ class RegisterUploadManager {
         
         this.uploadedFile = file;
         
-        // Create preview
-        if (file.type.startsWith('image/')) {
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                this.previewUrl = e.target.result;
-                this.showPreview();
-            };
-            reader.readAsDataURL(file);
-        } else {
-            // PDF file - show icon instead
-            this.previewUrl = 'pdf-icon';
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            this.previewUrl = e.target.result;
             this.showPreview();
-        }
+        };
+        reader.readAsDataURL(file);
         
         this.showToast(`File "${file.name}" selected`, 'success');
     }
 
     showPreview() {
-        document.getElementById('uploadArea').style.display = 'none';
-        document.getElementById('uploadPreview').style.display = 'block';
+        const uploadArea = document.getElementById('uploadArea');
+        const uploadPreview = document.getElementById('uploadPreview');
+        
+        if (uploadArea) uploadArea.style.display = 'none';
+        if (uploadPreview) uploadPreview.style.display = 'block';
         
         const previewImage = document.getElementById('previewImage');
         if (previewImage) {
-            if (this.previewUrl === 'pdf-icon') {
-                previewImage.innerHTML = `
-                    <div class="pdf-preview">
-                        <i class="fas fa-file-pdf"></i>
-                        <p>${this.uploadedFile.name}</p>
-                    </div>
-                `;
-            } else {
-                previewImage.innerHTML = `<img src="${this.previewUrl}" alt="Preview">`;
-            }
+            previewImage.innerHTML = `
+                <img src="${this.previewUrl}" alt="Preview" 
+                     style="width:100%;max-height:400px;object-fit:contain;border-radius:8px;">
+                <p style="margin-top:10px;color:#666;font-size:14px;">
+                    <i class="fas fa-file-image"></i> 
+                    ${this.uploadedFile.name} (${(this.uploadedFile.size / 1024).toFixed(1)} KB)
+                </p>
+            `;
         }
     }
 
     resetUpload() {
-        document.getElementById('uploadArea').style.display = 'block';
-        document.getElementById('uploadPreview').style.display = 'none';
-        document.getElementById('analysisProgress').style.display = 'none';
-        document.getElementById('analysisResults').style.display = 'none';
-        
-        document.getElementById('registerUpload').value = '';
+        const uploadArea = document.getElementById('uploadArea');
+        const uploadPreview = document.getElementById('uploadPreview');
+        const aiResults = document.getElementById('aiResults');
+        const registerUpload = document.getElementById('registerUpload');
+
+        if (uploadArea) uploadArea.style.display = 'block';
+        if (uploadPreview) uploadPreview.style.display = 'none';
+        if (aiResults) aiResults.style.display = 'none';
+
+        // Try old IDs too
+        const analysisProgress = document.getElementById('analysisProgress');
+        const analysisResults = document.getElementById('analysisResults');
+        if (analysisProgress) analysisProgress.style.display = 'none';
+        if (analysisResults) analysisResults.style.display = 'none';
+
+        if (registerUpload) registerUpload.value = '';
         this.uploadedFile = null;
         this.previewUrl = null;
         this.analysisResults = null;
     }
 
-    startAnalysis() {
+    async startAnalysis() {
         if (!this.uploadedFile) {
             this.showToast('Please select a file first', 'error');
             return;
         }
-        
-        // Hide preview, show progress
-        document.getElementById('uploadPreview').style.display = 'none';
-        document.getElementById('analysisProgress').style.display = 'block';
-        
-        // Simulate AI analysis with progress bar
-        this.simulateAnalysis();
-    }
 
-    simulateAnalysis() {
-        const progressFill = document.getElementById('analysisProgressFill');
-        const progressText = document.querySelector('.progress-text');
-        let progress = 0;
-        
-        const stages = [
-            { progress: 20, text: 'Reading image...' },
-            { progress: 40, text: 'Extracting text...' },
-            { progress: 60, text: 'Identifying items...' },
-            { progress: 80, text: 'Calculating totals...' },
-            { progress: 100, text: 'Generating insights...' }
-        ];
-        
-        const interval = setInterval(() => {
-            progress += 2;
-            progressFill.style.width = progress + '%';
-            
-            // Update stage text
-            stages.forEach(stage => {
-                if (progress >= stage.progress && progress < stage.progress + 10) {
-                    progressText.textContent = stage.text;
-                }
+        const analyzeBtn = document.getElementById('analyzeBtn');
+        const aiResults = document.getElementById('aiResults');
+
+        // Show loading
+        if (analyzeBtn) {
+            analyzeBtn.disabled = true;
+            analyzeBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Analyzing with AI...';
+        }
+
+        if (aiResults) {
+            aiResults.style.display = 'block';
+            aiResults.innerHTML = `
+                <div style="text-align:center;padding:40px;">
+                    <i class="fas fa-spinner fa-spin" style="font-size:2rem;color:#FF6B35;"></i>
+                    <p style="margin-top:16px;color:#666;">🤖 AI is reading your register...</p>
+                    <p style="color:#999;font-size:13px;margin-top:8px;">This may take 10-15 seconds</p>
+                </div>
+            `;
+        }
+
+        try {
+            const token = localStorage.getItem('access_token');
+            const formData = new FormData();
+            formData.append('image', this.uploadedFile);
+
+            const res = await fetch(`${SCAN_API}/api/scan/`, {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${token}` },
+                body: formData
             });
-            
-            if (progress >= 100) {
-                clearInterval(interval);
-                setTimeout(() => {
-                    this.showResults();
-                }, 500);
+
+            if (res.ok) {
+                const data = await res.json();
+                this.analysisResults = data;
+                this.showGroqResults(data);
+                this.showToast('Analysis complete!', 'success');
+            } else {
+                const err = await res.json();
+                if (aiResults) {
+                    aiResults.innerHTML = `
+                        <div style="text-align:center;padding:40px;">
+                            <i class="fas fa-exclamation-circle" style="font-size:2rem;color:#F44336;"></i>
+                            <p style="margin-top:16px;color:#666;">${err.detail || 'Analysis failed'}</p>
+                        </div>
+                    `;
+                }
             }
-        }, 100);
+        } catch (err) {
+            if (aiResults) {
+                aiResults.innerHTML = `
+                    <div style="text-align:center;padding:40px;">
+                        <i class="fas fa-wifi" style="font-size:2rem;color:#F44336;"></i>
+                        <p style="margin-top:16px;color:#666;">Cannot connect to server. Please try again.</p>
+                    </div>
+                `;
+            }
+        } finally {
+            if (analyzeBtn) {
+                analyzeBtn.disabled = false;
+                analyzeBtn.innerHTML = '<i class="fas fa-brain"></i> Analyze with AI';
+            }
+        }
     }
 
-    showResults() {
-        // Hide progress, show results
-        document.getElementById('analysisProgress').style.display = 'none';
-        document.getElementById('analysisResults').style.display = 'block';
-        
-        // Generate mock analysis results
-        this.analysisResults = {
-            totalSales: 42850,
-            transactions: 156,
-            topItems: ['Atta (Flour)', 'Sugar', 'Tea Powder'],
-            bestDay: 'Saturday',
-            regularCustomers: 28,
-            insights: [
-                'Stock up on tea powder - selling fast!',
-                'Morning hours (9-11 AM) are your peak sales time',
-                '28 regular customers identified - consider loyalty program',
-                'Average transaction value: ₹275',
-                'Weekend sales are 40% higher than weekdays'
-            ],
-            items: [
-                { name: 'Atta', quantity: 52, revenue: 4160 },
-                { name: 'Sugar', quantity: 38, revenue: 2280 },
-                { name: 'Tea Powder', quantity: 25, revenue: 1875 },
-                { name: 'Cooking Oil', quantity: 18, revenue: 2700 },
-                { name: 'Rice', quantity: 15, revenue: 1200 }
-            ]
-        };
-        
-        // Populate results
-        this.populateResults();
-    }
+    showGroqResults(data) {
+        const aiResults = document.getElementById('aiResults');
+        if (!aiResults) return;
 
-    populateResults() {
-        if (!this.analysisResults) return;
-        
-        const results = this.analysisResults;
-        
-        // Update result cards
-        const resultCards = document.querySelectorAll('.result-card');
-        if (resultCards.length >= 4) {
-            resultCards[0].querySelector('.result-value').textContent = `₹${results.totalSales.toLocaleString()}`;
-            resultCards[1].querySelector('.result-value').textContent = results.transactions;
-            resultCards[2].querySelector('.result-value').textContent = results.topItems.join(', ');
-            resultCards[3].querySelector('.result-value').textContent = results.bestDay;
-        }
-        
-        // Update insights list
-        const insightsList = document.querySelector('.result-insights ul');
-        if (insightsList) {
-            insightsList.innerHTML = results.insights.map(insight => 
-                `<li><i class="fas fa-check"></i> ${insight}</li>`
-            ).join('');
-        }
+        const items = data.parsed_items || [];
+
+        const itemsHtml = items.length > 0 ? `
+            <table style="width:100%;border-collapse:collapse;margin-top:16px;border-radius:8px;overflow:hidden;">
+                <thead>
+                    <tr style="background:#FF6B35;color:white;">
+                        <th style="padding:12px;text-align:left;">Item</th>
+                        <th style="padding:12px;text-align:center;">Qty</th>
+                        <th style="padding:12px;text-align:center;">Unit</th>
+                        <th style="padding:12px;text-align:right;">Price (₹)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${items.map((item, i) => `
+                        <tr style="background:${i % 2 === 0 ? '#fff' : '#f9f9f9'};">
+                            <td style="padding:10px;border-bottom:1px solid #eee;">${item.name}</td>
+                            <td style="padding:10px;text-align:center;border-bottom:1px solid #eee;">${item.quantity || '-'}</td>
+                            <td style="padding:10px;text-align:center;border-bottom:1px solid #eee;">${item.unit || '-'}</td>
+                            <td style="padding:10px;text-align:right;border-bottom:1px solid #eee;">${item.price ? '₹' + item.price : '-'}</td>
+                        </tr>
+                    `).join('')}
+                </tbody>
+            </table>
+        ` : '<p style="color:#999;text-align:center;padding:20px;">No items detected. Try a clearer image.</p>';
+
+        aiResults.style.display = 'block';
+        aiResults.innerHTML = `
+            <div style="padding:20px;">
+                <h4 style="color:#FF6B35;margin-bottom:16px;">
+                    <i class="fas fa-check-circle"></i> AI Analysis Complete!
+                </h4>
+                ${data.date ? `<p style="color:#666;margin-bottom:8px;"><strong>Date:</strong> ${data.date}</p>` : ''}
+                ${data.total ? `<p style="color:#666;margin-bottom:16px;"><strong>Total:</strong> ₹${data.total}</p>` : ''}
+                <h5 style="margin-bottom:8px;">Extracted Items (${items.length}):</h5>
+                ${itemsHtml}
+                ${data.raw_text ? `
+                    <details style="margin-top:16px;">
+                        <summary style="cursor:pointer;color:#666;padding:8px;">View raw text extracted</summary>
+                        <p style="margin-top:8px;color:#999;font-size:12px;white-space:pre-wrap;background:#f5f5f5;padding:12px;border-radius:8px;">${data.raw_text}</p>
+                    </details>
+                ` : ''}
+                <div style="margin-top:20px;display:flex;gap:12px;flex-wrap:wrap;">
+                    <button onclick="window.registerUpload.downloadReport()" 
+                            style="background:#FF6B35;color:white;border:none;padding:10px 20px;border-radius:8px;cursor:pointer;">
+                        <i class="fas fa-download"></i> Download Report
+                    </button>
+                    <button onclick="window.registerUpload.resetUpload()" 
+                            style="background:#f5f5f5;color:#333;border:none;padding:10px 20px;border-radius:8px;cursor:pointer;">
+                        <i class="fas fa-redo"></i> Upload Another
+                    </button>
+                </div>
+            </div>
+        `;
     }
 
     async importToDashboard() {
@@ -272,37 +304,7 @@ class RegisterUploadManager {
             this.showToast('No analysis results to import', 'error');
             return;
         }
-        
-        this.showToast('Importing data to dashboard...', 'info');
-        
-        try {
-            // Simulate API call
-            await new Promise(resolve => setTimeout(resolve, 1500));
-            
-            // Update dashboard data
-            if (window.dashboard) {
-                // Update sales data
-                const todaySales = document.getElementById('todaySales');
-                if (todaySales) {
-                    todaySales.textContent = this.analysisResults.totalSales;
-                }
-                
-                // Refresh inventory with detected items
-                if (window.dashboard.loadInventoryData) {
-                    window.dashboard.loadInventoryData();
-                }
-                
-                // Switch to dashboard view
-                window.dashboard.switchSection('dashboard');
-            }
-            
-            this.showToast('Data imported successfully!', 'success');
-            this.resetUpload();
-            
-        } catch (error) {
-            console.error('Import failed:', error);
-            this.showToast('Failed to import data', 'error');
-        }
+        this.showToast('Feature coming soon!', 'info');
     }
 
     downloadReport() {
@@ -310,34 +312,30 @@ class RegisterUploadManager {
             this.showToast('No analysis results to download', 'error');
             return;
         }
-        
-        // Create report content
+
+        const data = this.analysisResults;
+        const items = data.parsed_items || [];
+
         const report = `
-            AI BAZAAR - REGISTER ANALYSIS REPORT
-            ====================================
-            Date: ${new Date().toLocaleDateString()}
-            
-            SUMMARY
-            -------
-            Total Sales: ₹${this.analysisResults.totalSales}
-            Transactions: ${this.analysisResults.transactions}
-            Best Day: ${this.analysisResults.bestDay}
-            Regular Customers: ${this.analysisResults.regularCustomers}
-            
-            TOP SELLING ITEMS
-            -----------------
-            ${this.analysisResults.items.map(item => 
-                `${item.name}: ${item.quantity} units (₹${item.revenue})`
-            ).join('\n')}
-            
-            AI INSIGHTS
-            -----------
-            ${this.analysisResults.insights.join('\n')}
-            
-            Generated by AI Bazaar - Your Smart Shop Assistant
+AI BAZAAR - REGISTER ANALYSIS REPORT
+=====================================
+Date: ${new Date().toLocaleDateString()}
+${data.date ? 'Register Date: ' + data.date : ''}
+${data.total ? 'Total Amount: ₹' + data.total : ''}
+
+EXTRACTED ITEMS (${items.length})
+---------------------------------
+${items.map(item => 
+    `${item.name}: ${item.quantity || '-'} ${item.unit || ''} - ₹${item.price || '-'}`
+).join('\n')}
+
+RAW TEXT
+--------
+${data.raw_text || 'No raw text'}
+
+Generated by AI Bazaar - Your Smart Shop Assistant
         `;
-        
-        // Create download link
+
         const blob = new Blob([report], { type: 'text/plain' });
         const url = window.URL.createObjectURL(blob);
         const a = document.createElement('a');
@@ -347,8 +345,8 @@ class RegisterUploadManager {
         a.click();
         document.body.removeChild(a);
         window.URL.revokeObjectURL(url);
-        
-        this.showToast('Report downloaded successfully!', 'success');
+
+        this.showToast('Report downloaded!', 'success');
     }
 
     showToast(message, type = 'info') {
@@ -360,7 +358,7 @@ class RegisterUploadManager {
     }
 }
 
-// Initialize register upload when dashboard loads
+// Initialize
 document.addEventListener('DOMContentLoaded', () => {
     if (document.getElementById('register-upload')) {
         window.registerUpload = new RegisterUploadManager();
