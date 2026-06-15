@@ -279,6 +279,41 @@ class RegisterUploadManager {
                 ${data.total ? `<p style="color:#666;margin-bottom:16px;"><strong>Total:</strong> ₹${data.total}</p>` : ''}
                 <h5 style="margin-bottom:8px;">Extracted Items (${items.length}):</h5>
                 ${itemsHtml}
+                <div style="margin-top:20px;background:#FFF9F0;border-radius:8px;padding:16px;border-left:4px solid #FF6B35;">
+    <h5 style="color:#FF6B35;margin-bottom:12px;">
+        <i class="fas fa-lightbulb"></i> AI Recommendations
+    </h5>
+    <ul style="list-style:none;padding:0;margin:0;">
+        ${items.length > 0 ? `
+            <li style="padding:6px 0;color:#444;">
+                <i class="fas fa-check" style="color:#4CAF50;margin-right:8px;"></i>
+                Found ${items.length} items in your register
+            </li>
+            <li style="padding:6px 0;color:#444;">
+                <i class="fas fa-boxes" style="color:#FF6B35;margin-right:8px;"></i>
+                Consider adding these items to your inventory if not already present
+            </li>
+            ${data.total ? `
+            <li style="padding:6px 0;color:#444;">
+                <i class="fas fa-rupee-sign" style="color:#2E86AB;margin-right:8px;"></i>
+                Total transaction value: ₹${data.total} — record this in billing
+            </li>` : ''}
+            <li style="padding:6px 0;color:#444;">
+                <i class="fas fa-chart-line" style="color:#9C27B0;margin-right:8px;"></i>
+                Use Voice Entry to quickly record future sales instead of paper register
+            </li>
+        ` : `
+            <li style="padding:6px 0;color:#444;">
+                <i class="fas fa-camera" style="color:#FF6B35;margin-right:8px;"></i>
+                Try uploading a clearer image for better results
+            </li>
+            <li style="padding:6px 0;color:#444;">
+                <i class="fas fa-lightbulb" style="color:#FFB74D;margin-right:8px;"></i>
+                Make sure text is clearly visible and not blurry
+            </li>
+        `}
+    </ul>
+</div>
                 ${data.raw_text ? `
                     <details style="margin-top:16px;">
                         <summary style="cursor:pointer;color:#666;padding:8px;">View raw text extracted</summary>
