@@ -113,9 +113,38 @@ async function sendAudioToBackend(audioBlob) {
         });
 
         if (res.ok) {
-            const data = await res.json();
-            addMessage(`You said: "${data.transcript}"`, 'user');
-            addMessage(data.reply_text, 'ai');
+    const data = await res.json();
+    addMessage(`You said: "${data.transcript}"`, 'user');
+    addMessage(data.reply_text, 'ai');
+
+    // Show action result
+    if (data.action_result) {
+        const result = data.action_result;
+        if (result.type === 'sale') {
+            const sold = result.items.filter(i => i.status === 'sold');
+            const notFound = result.items.filter(i => i.status !== 'sold');
+            if (sold.length > 0) {
+                addMessage(`✅ Sale recorded! Total: ₹${result.total.toFixed(2)}`, 'ai');
+                // Refresh dashboard and charts
+                if (window.loadDashboardData) loadDashboardData();
+                if (window.dashboardCharts) dashboardCharts.initAllCharts();
+            }
+            if (notFound.length > 0) {
+                addMessage(`⚠️ Not found in inventory: ${notFound.map(i => i.name).join(', ')}. Please add them first!`, 'ai');
+            }
+        } else if (result.type === 'stock_add') {
+            const updated = result.items.filter(i => i.status === 'updated');
+            const notFound = result.items.filter(i => i.status === 'not_found');
+            if (updated.length > 0) {
+                addMessage(`✅ Stock updated! ${updated.map(i => `${i.name}: ${i.new_stock} ${i.unit || ''}`).join(', ')}`, 'ai');
+                // Refresh inventory
+                if (window.loadInventory) loadInventory();
+            }
+            if (notFound.length > 0) {
+                addMessage(`⚠️ Not found: ${notFound.map(i => i.name).join(', ')}. Please add them to inventory first!`, 'ai');
+            }
+        }
+    }
 
             // Show action result
             if (data.action_result) {
